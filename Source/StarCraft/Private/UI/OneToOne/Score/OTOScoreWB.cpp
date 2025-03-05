@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "Player/SC_UnitTestMainCamera.h"
 #include "AI/SCAICharacter.h"
+#include "OneToOne/WavesNPCSpawner.h"
 
 void UOTOScoreWB::NativeConstruct()
 {
@@ -68,4 +69,10 @@ void UOTOScoreWB::GetScores(int32& CurrBlueTeamScore, int32& CurrRedTeamScore)
 {
 	CurrBlueTeamScore = BlueTeamScore;
 	CurrRedTeamScore = RedTeamScore;
+}
+
+bool UOTOScoreWB::IsOTOGameEnded()
+{
+	auto WavesNPCSpawner = Cast<AWavesNPCSpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AWavesNPCSpawner::StaticClass()));
+	return WavesNPCSpawner->GetCurrentWave() > WavesNPCSpawner->GetWavesCount();
 }

@@ -6,7 +6,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
 #include "Components/Overlay.h"
+#include "Player/SC_MainCamera.h"
 #include "GameStates/SCGameState.h"
+#include "Player/SCPlayerController.h"
 
 bool UGameMenuWB::Initialize()
 {
@@ -47,6 +49,8 @@ void UGameMenuWB::OnContinueButtonClicked()
 {
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
 	SetVisibility(ESlateVisibility::Hidden);
+
+	Cast<ASC_MainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->SetupGameInputComponentBinding();
 }
 
 void UGameMenuWB::OnSettingsButtonClicked()
@@ -62,6 +66,7 @@ void UGameMenuWB::OnExitButtonClicked()
 {
 	if (GetWorld()->GetNetMode() != NM_Standalone)
 	{
+		Cast<ASCPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->Server_GameMenuOnExitButtonClicked();
 		Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()))->DestroySession();
 	}
 

@@ -45,6 +45,9 @@ protected:
 public:
 	virtual void NativeConstruct() override;
 
+	UFUNCTION(BlueprintCallable)
+	bool IsOTOGameEnded();
+
 	void SetNewScoreFromServer_Impl(int32 NewBlueTeamScore, int32 NewRedTeamScore);
 	void GetScores(int32& CurrBlueTeamScore, int32& CurrRedTeamScore);
 };

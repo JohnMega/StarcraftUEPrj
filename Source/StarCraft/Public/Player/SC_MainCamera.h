@@ -64,6 +64,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Mapping")
 	UInputMappingContext* GameMappingContext;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Mapping")
+	UInputMappingContext* MenuMappingContext;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Action")
 	UInputAction* IACameraMove;
 
@@ -198,6 +201,8 @@ public:
 	EMainCameraStates GetCurrentState() const;
 	bool IsSomeoneUnitSelected() const;
 	const TArray<ASCAICharacter*>* GetSelectedUnits() const;
+	UEnhancedInputLocalPlayerSubsystem* GetInputSubsystem() { return InputSubsystem; }
+	void SetupGameInputComponentBinding();
 
 // ASCGoalActorNetHelper
 public:

@@ -13,7 +13,8 @@ class ASCMinion;
 class ASCAICharacter;
 class ASCAIController;
 
-enum class ETeamType
+UENUM(BlueprintType)
+enum class ETeamType : uint8
 {
 	BLUE_TEAM_TYPE = 0,
 	RED_TEAM_TYPE
@@ -56,14 +57,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Waves")
 	TArray<FNPCWave> NPCWaves;
 
+	int32 CurrentWave;
+
 private:
 	void UnitSpawn(UClass* UnitClass, ETeamType CurrTeamType);
 
 public:	
 	AWavesNPCSpawner();
 
-	void UnitSpawn_Impl(UClass* UnitClass, ETeamType CurrTeamType);
-
 	UFUNCTION(BlueprintCallable)
 	void SpawnNPCWaves(int32 Wave);
+
+	void UnitSpawn_Impl(UClass* UnitClass, ETeamType CurrTeamType);
+	int32 GetWavesCount() const { return NPCWaves.Num(); }
+	int32 GetCurrentWave() { return CurrentWave; }
 };

@@ -16,6 +16,7 @@ class STARCRAFT_API ASCPlayerController : public APlayerController
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void PawnLeavingGame() override;
 
 // UAttackNotifyNetHelper
 public:
@@ -26,4 +27,9 @@ public:
 public:
 	UFUNCTION(Server, Reliable)
 	void Server_UnitSpawn(UClass* UnitClass, int32 CurrTeamType);
+
+// UGameMenuWBNetHealper
+public:
+	UFUNCTION(Server, Reliable)
+	void Server_GameMenuOnExitButtonClicked();
 };

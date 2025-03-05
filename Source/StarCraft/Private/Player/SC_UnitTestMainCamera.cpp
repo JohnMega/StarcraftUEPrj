@@ -59,12 +59,6 @@ void ASC_UnitTestMainCamera::SetupInGameMenuInputComponentBinding(UInputComponen
 	InputSubsystem->AddMappingContext(InGameMenuMappingContext, 0);
 }
 
-void ASC_UnitTestMainCamera::SetupGameInputComponentBinding(UInputComponent* PlayerInputComponent)
-{
-	InputSubsystem->ClearAllMappings();
-	InputSubsystem->AddMappingContext(GameMappingContext, 0);
-}
-
 void ASC_UnitTestMainCamera::OnGameStateChange(EGameState NewGameState)
 {
 	if (NewGameState == EGameState::GAME)
@@ -105,7 +99,7 @@ void ASC_UnitTestMainCamera::OnSetViewTargetWithBlendFinish()
 
 	if (PlayerController->GetLocalPlayer())
 	{
-		SetupGameInputComponentBinding(InputComponent);
+		SetupGameInputComponentBinding();
 	}
 }
 

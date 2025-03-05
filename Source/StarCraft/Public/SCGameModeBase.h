@@ -11,9 +11,6 @@ class STARCRAFT_API ASCGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 
-protected:
-	virtual void Logout(AController* Exiting) override;
-
 public:
 	ASCGameModeBase();
 };

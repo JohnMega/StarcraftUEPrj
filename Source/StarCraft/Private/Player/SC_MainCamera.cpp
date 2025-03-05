@@ -140,6 +140,12 @@ void ASC_MainCamera::ChangeUnitSkillsKeys()
 	}
 }
 
+void ASC_MainCamera::SetupGameInputComponentBinding()
+{
+	InputSubsystem->ClearAllMappings();
+	InputSubsystem->AddMappingContext(GameMappingContext, 0);
+}
+
 const ASCAICharacter* ASC_MainCamera::GetFirstSelectedUnit() const
 {
 	return SelectedUnits.Num() > 0 ? SelectedUnits[0] : nullptr;
@@ -181,6 +187,9 @@ void ASC_MainCamera::OnBombActivateAction(const FInputActionValue& Value)
 
 void ASC_MainCamera::OnGameMenuEnable(const FInputActionValue& Value)
 {
+	InputSubsystem->ClearAllMappings();
+	InputSubsystem->AddMappingContext(MenuMappingContext, 0);
+
 	auto GameMenuWB = MainCameraWidgetComponent->GetWidget<UGameMenuWB>();
 	GameMenuWB->OnGameMenuEnable();
 }

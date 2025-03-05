@@ -30,6 +30,8 @@ public:
 	FOnTimerFinishSignature OnTimerFinish;
 
 protected:
+	virtual void RemoveFromParent() override;
+
 	UFUNCTION(BlueprintCallable)
 	void SetTimerText();
 

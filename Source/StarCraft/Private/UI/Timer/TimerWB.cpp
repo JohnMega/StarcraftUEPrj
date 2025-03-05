@@ -17,6 +17,13 @@ bool UTimerWB::Initialize()
 	return InitRes;
 }
 
+void UTimerWB::RemoveFromParent()
+{
+	OnTimerFinish.Clear();
+
+	Super::RemoveFromParent();
+}
+
 void UTimerWB::StopTimer()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle);

@@ -4,10 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "OTORoundFinishWB.generated.h"
+#include "OTORoundEndScreenWB.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class STARCRAFT_API UOTORoundFinishWB : public UUserWidget
+class STARCRAFT_API UOTORoundEndScreenWB : public UUserWidget
 {
 	GENERATED_BODY()
+	
 };

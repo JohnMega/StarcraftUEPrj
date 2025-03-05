@@ -33,6 +33,7 @@ void AWavesNPCSpawner::SpawnNPCWaves(int32 Wave)
 			UnitSpawn(NPCWaves[Wave].NPCClasses[i], ETeamType::RED_TEAM_TYPE);
 		}
 	}
+	CurrentWave = Wave + 1;
 }
 
 void AWavesNPCSpawner::UnitSpawn(UClass* UnitClass, ETeamType CurrTeamType)

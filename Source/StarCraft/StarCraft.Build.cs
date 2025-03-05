@@ -16,8 +16,9 @@ public class StarCraft : ModuleRules
 			"EnhancedInput", 
 			"Niagara", 
 			"MediaAssets",
-            "NavigationSystem"
-		});
+            "NavigationSystem",
+            "EngineSettings"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

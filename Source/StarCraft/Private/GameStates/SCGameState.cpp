@@ -3,6 +3,7 @@
 
 #include "GameStates/SCGameState.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "FunctionLibraries/SCFunctionLibrary.h"
 #include "Player/SC_UnitTestMainCamera.h"
 #include "Player/SCPlayerController.h"

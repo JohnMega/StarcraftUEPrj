@@ -6,18 +6,10 @@
 #include "Player/SCPlayerController.h"
 #include "Player/SC_MainCamera.h"
 #include "FunctionLibraries/SCFunctionLibrary.h"
-#include "UI/OneToOne/RoundFinish/OTORoundFinishWB.h"
+#include "OneToOne/OTOManager.h"
 
 ASCGameModeBase::ASCGameModeBase()
 {
 	DefaultPawnClass = ASC_MainCamera::StaticClass();
 	PlayerControllerClass = ASCPlayerController::StaticClass();
-}
-
-void ASCGameModeBase::Logout(AController* Exiting)
-{
-	UKismetSystemLibrary::PrintString(GetWorld(), "Logout");
-	Super::Logout(Exiting);
-
-	USCFunctionLibrary::GetWidgetByClass<UOTORoundFinishWB>(GetWorld())->OTOGameEndingHandle();
 }

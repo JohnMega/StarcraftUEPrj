@@ -12,12 +12,26 @@
 #include "NiagaraComponent.h"
 #include "GameStates/SCGameState.h"
 #include "OneToOne/WavesNPCSpawner.h"
+#include "OneToOne/OTOManager.h"
+#include "UI/GameOver/GameOverWB.h"
+#include "GameInstances/SCGameInstance.h"
 
 void ASCPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	bShowMouseCursor = true;
+}
+
+void ASCPlayerController::PawnLeavingGame()
+{
+	auto OTORoundEndScreenWB = USCFunctionLibrary::GetWidgetByClass<UGameOverWB>(GetWorld());
+	if (OTORoundEndScreenWB && OTORoundEndScreenWB->GetVisibility() == ESlateVisibility::Hidden)
+	{
+		Server_GameMenuOnExitButtonClicked();
+	}
+
+	Super::PawnLeavingGame();
 }
 
 // UAttackNotifyNetHelper
@@ -39,4 +53,13 @@ void ASCPlayerController::Server_UnitSpawn_Implementation(UClass* UnitClass, int
 {
 	auto WavesNPCSpawner = Cast<AWavesNPCSpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AWavesNPCSpawner::StaticClass()));
 	WavesNPCSpawner->UnitSpawn_Impl(UnitClass, (ETeamType)CurrTeamType);
+}
+
+// UGameMenuWBNetHealper
+
+void ASCPlayerController::Server_GameMenuOnExitButtonClicked_Implementation()
+{
+	Cast<USCGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))->DeleteSomeWidgetsWhileNetworkFailure();
+	Cast<AOTOManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AOTOManager::StaticClass()))->OTOGameEndingHandle(ETeamType::BLUE_TEAM_TYPE);
+	UGameplayStatics::SetGamePaused(GetWorld(), true);
 }

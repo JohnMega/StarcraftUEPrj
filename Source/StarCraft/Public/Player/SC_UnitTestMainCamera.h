@@ -38,7 +38,6 @@ public:
 	ASC_UnitTestMainCamera(const FObjectInitializer& ObjectInitializer);
 
 	void SetupInGameMenuInputComponentBinding(UInputComponent* PlayerInputComponent);
-	void SetupGameInputComponentBinding(UInputComponent* PlayerInputComponent);
 
 // AUnitSelectMenuNetHelper
 public:

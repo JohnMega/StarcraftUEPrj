@@ -35,6 +35,13 @@ public:
 	{
 		TArray<UUserWidget*> AllWidgets;
 		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(World, AllWidgets, T::StaticClass(), false);
-		return AllWidgets[0] ? Cast<T>(AllWidgets[0]) : nullptr;
+		return AllWidgets.Num() > 0 ? Cast<T>(AllWidgets[0]) : nullptr;
+	}
+
+	static UUserWidget* GetWidgetByUClass(UWorld* World, TSubclassOf<UUserWidget> WidgetClass)
+	{
+		TArray<UUserWidget*> AllWidgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(World, AllWidgets, WidgetClass, false);
+		return AllWidgets.Num() > 0 ? AllWidgets[0] : nullptr;
 	}
 };
