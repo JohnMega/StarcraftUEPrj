@@ -163,7 +163,6 @@ private:
 	void LineTraceFromCursorForPawn();
 
 	void OnCameraMove(const FInputActionValue& Value);
-	void OnCreateGoal(const FInputActionValue& Value);
 	void OnSelectBox(const FInputActionValue& Value);
 	void OnSelectOneUnitPressed(const FInputActionValue& Value);
 	void OnAttackState(const FInputActionValue& Value);
@@ -174,10 +173,14 @@ private:
 	void CameraDecrease(const FInputActionValue& Value);
 	void OnGameMenuEnable(const FInputActionValue& Value);
 	void OnBombActivateAction(const FInputActionValue& Value);
-
-	void OnUseStimpack(const FInputActionValue& Value);
-	void OnUseHealthKit(const FInputActionValue& Value);
 	void OnUseMinionRepair(const FInputActionValue& Value);
+	void OnUseHealthKit(const FInputActionValue& Value);
+	void OnUseStimpack(const FInputActionValue& Value);
+
+	void OnCreateGoal(const FInputActionValue& Value);
+	UFUNCTION(Server, Reliable)
+	void Server_OnCreateGoal(ASCAICharacter* SelectedUnit, const FVector& CHRImpactPoint, AActor* CHRActor, bool IsCHRCharacterFriendly
+		, int32 ClientGoalActorID, int32 CurrentClientState);
 
 protected:
 	virtual void BeginPlay() override;
@@ -187,14 +190,36 @@ public:
 	ASC_MainCamera(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Tick(float DeltaTime) override;
-
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	EMainCameraStates GetCurrentState() const;
-
-	bool IsSomeoneUnitSelected() const;
-	const TArray<ASCAICharacter*>* GetSelectedUnits() const;
 
 	UFUNCTION(BlueprintCallable)
 	const ASCAICharacter* GetFirstSelectedUnit() const;
+
+	EMainCameraStates GetCurrentState() const;
+	bool IsSomeoneUnitSelected() const;
+	const TArray<ASCAICharacter*>* GetSelectedUnits() const;
+
+// ASCGoalActorNetHelper
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_GoalActorEndPlay(int32 ClientGoalActorID);
+
+// UHealthComponentNetHelper
+public:
+	UFUNCTION(Server, Reliable)
+	void Server_HealthComponentOnTakeAnyDamage(AActor* AttackedCharacter, float Damage);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_HealthComponentOnTakeAnyDamage(AActor* AttackedCharacter, float Damage);
+
+// ASCMarineNetHelper
+public:
+	UFUNCTION(Server, Reliable)
+	void Server_MarineOnSkillUse(ASCAICharacter* Marine, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_MarineOnSkillUse(ASCAICharacter* Marine, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass);
+
+	UFUNCTION(Server, Reliable)
+	void Server_MinionOnSkillUse(ASCAICharacter* Minion, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_MinionOnSkillUse(ASCAICharacter* Minion, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass);
 };

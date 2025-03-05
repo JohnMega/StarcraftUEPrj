@@ -10,6 +10,7 @@ class UStaticMeshComponent;
 class UBehaviorTree;
 class ASCPlayerController;
 class UNiagaraComponent;
+class UStaticMeshComponent;
 class UHealthComponent;
 class UWidgetComponent;
 class UNiagaraSystem;
@@ -36,12 +37,15 @@ private:
 	ASC_MainCamera* MainCamera = nullptr;
 
 protected:
+	UPROPERTY(Replicated)
 	ASCAICharacter* AttackTargetCharacter = nullptr;
 
 	FVector SelectedCircleDiametrVector;
 	UNiagaraComponent* NiagaraFullCircleComponent = nullptr;
 
 	ASCGoalActor* CurrentGoal = nullptr;
+	UPROPERTY(Replicated)
+	bool bIsHaveCurrentGoal = false;
 
 	EAICharacterState CharacterState = EAICharacterState::ATTACK;
 
@@ -58,6 +62,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	UNiagaraComponent* NiagaraComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	UStaticMeshComponent* HitBox;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Class")
 	TSubclassOf<ASCAICharacter> AICharacterClass;
@@ -86,7 +93,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Niagara")
 	UNiagaraSystem* NiagaraBlood;
 
-	UPROPERTY(EditAnywhere, Category = "Relationship")
+	UPROPERTY(EditAnywhere, Replicated, Category = "Relationship")
 	bool bIsFriendly = true;
 
 public:
@@ -100,6 +107,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnSkillUse(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass) { }
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	ASCPlayerController* GetSCPlayerController() const;
 	void OnFriendlyCharacterAim(ASCAICharacter* Character);
@@ -123,10 +131,9 @@ public:
 	ASCAICharacter();
 
 	virtual void Tick(float DeltaTime) override;
-
 	virtual void Attack() { };
+	virtual void OnDeath() { }
 
-	void DestroySCCharacter(); // should call instead of Destroy()
 	ASCGoalActor* GetCurrentGoal() const;
 	void DeleteCurrentGoal();
 	bool IsSelected() const;
@@ -136,7 +143,8 @@ public:
 	UNiagaraSystem* GetNiagaraBlood() const;
 	UClass* GetCharacterClass() const;
 
-	virtual void OnDeath() { }
+	UFUNCTION(BlueprintCallable)
+	void DestroySCCharacter(); // should call instead of Destroy()
 
 	UFUNCTION(BlueprintCallable)
 	bool IsDead() const;

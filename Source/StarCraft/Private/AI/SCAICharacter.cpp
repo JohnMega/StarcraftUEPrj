@@ -10,6 +10,7 @@
 #include "NiagaraComponent.h"
 #include "Player/SC_MainCamera.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -23,6 +24,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ASCAICharacter::ASCAICharacter()
 {
@@ -32,6 +34,11 @@ ASCAICharacter::ASCAICharacter()
 	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("NiagaraComponent");
 	NiagaraComponent->SetupAttachment(GetRootComponent());
 
+	HitBox = CreateDefaultSubobject<UStaticMeshComponent>("HitBox");
+	HitBox->SetupAttachment(GetRootComponent());
+	HitBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); // You need to set cursor block channel in character blueprint
+	HitBox->SetCanEverAffectNavigation(false);
+
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>("HealthComponent");
 
 	HealthWidgetComponent = CreateDefaultSubobject<UWidgetComponent>("WidgetComponent");
@@ -40,6 +47,13 @@ ASCAICharacter::ASCAICharacter()
 
 void ASCAICharacter::BeginPlay()
 {
+	auto FriendlyTypeFixasion = [&]()
+		{
+			if (GetWorld()->GetNetMode() == NM_ListenServer || GetWorld()->GetNetMode() == NM_Standalone) return;
+
+			bIsFriendly = !bIsFriendly ? true : false;
+		};
+
 	Super::BeginPlay();
 
 	if (!GetWorld()) return;
@@ -61,6 +75,7 @@ void ASCAICharacter::BeginPlay()
 	NiagaraComponent->SetNiagaraVariableFloat(SelectedCircleRadiusVarName.ToString(), (SelectedCircleDiametrVector.Length() / 2.0f));
 	
 	IsInitiallySelectedHandle();
+	FriendlyTypeFixasion();
 }
 
 void ASCAICharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -78,6 +93,8 @@ void ASCAICharacter::Tick(float DeltaTime)
 
 	StuckHandle();
 
+	if (GetWorld()->GetNetMode() != NM_ListenServer && GetWorld()->GetNetMode() != NM_Standalone) return;
+
 	if (CharacterState == EAICharacterState::INDIVIDUAL_ATTACK)
 	{
 		if (AttackTargetCharacter) AttackBehaviorHandle();
@@ -89,6 +106,15 @@ void ASCAICharacter::Tick(float DeltaTime)
 		else
 			SearchBestEnemyToAttack();
 	}
+}
+
+void ASCAICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ASCAICharacter, bIsFriendly);
+	DOREPLIFETIME(ASCAICharacter, bIsHaveCurrentGoal);
+	DOREPLIFETIME(ASCAICharacter, AttackTargetCharacter);
 }
 
 void ASCAICharacter::IsInitiallySelectedHandle()
@@ -104,6 +130,8 @@ void ASCAICharacter::IsInitiallySelectedHandle()
 
 void ASCAICharacter::DestroySCCharacter()
 {
+	if (GetWorld()->GetNetMode() == NM_Client) return;
+
 	Cast<ASCAIController>(GetOwner())->UnPossess();
 	Destroy();
 }
@@ -156,7 +184,7 @@ void ASCAICharacter::SearchBestEnemyToAttack()
 	}
 
 	AttackTargetCharacter = BestActor;
-	if (!bIsFriendly && AttackTargetCharacter) DeleteCurrentGoal(); // For AI`s
+	if (!bIsFriendly && AttackTargetCharacter && GetWorld()->GetNetMode() == NM_Standalone) DeleteCurrentGoal(); // For AI`s
 }
 
 void ASCAICharacter::LoseSightRadiusHandle()
@@ -177,7 +205,10 @@ void ASCAICharacter::LoseSightRadiusHandle()
 			OnAddNewGoalActor(CharacterState);
 		}
 
-		if(CharacterState != EAICharacterState::INDIVIDUAL_ATTACK) AttackTargetCharacter = nullptr;
+		if (CharacterState != EAICharacterState::INDIVIDUAL_ATTACK)
+		{
+			AttackTargetCharacter = nullptr;
+		}
 	}
 	else if (CharacterState == EAICharacterState::INDIVIDUAL_ATTACK)
 	{
@@ -310,6 +341,7 @@ void ASCAICharacter::SetCurrentGoal(ASCGoalActor* NewGoal)
 {
 	if (CurrentGoal) CurrentGoal->Destroy();
 	CurrentGoal = NewGoal;
+	bIsHaveCurrentGoal = !!NewGoal;
 }
 
 FVector ASCAICharacter::GetSelectedCircleDiametrVector() const
@@ -354,7 +386,7 @@ bool ASCAICharacter::IsHaveAttackTarget() const
 
 bool ASCAICharacter::IsHaveMoveGoal() const
 {
-	return !!CurrentGoal;
+	return bIsHaveCurrentGoal;
 }
 
 bool ASCAICharacter::IsInAttackState() const

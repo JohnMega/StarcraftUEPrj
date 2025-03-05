@@ -13,10 +13,14 @@ class STARCRAFT_API UUnitTestCameraWidgetComponent : public UMainCameraWidgetCom
 	
 protected:
 	UInGameMenuWB* InGameMenuWidget;
+	class UOTOPlayersAcceptWB* PlayersAcceptWidget;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Widget")
 	TSubclassOf<UInGameMenuWB> InGameMenuClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Widget")
+	TSubclassOf<UOTOPlayersAcceptWB> PlayersAcceptClass;
 
 protected:
 	virtual void BeginPlay() override;

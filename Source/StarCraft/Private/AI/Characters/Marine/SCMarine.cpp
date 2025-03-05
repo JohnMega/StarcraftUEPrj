@@ -19,6 +19,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "AI/Characters/Minion/SCMinion.h"
 #include "Sound/SoundCue.h"
+#include "Player/SC_MainCamera.h"
 
 void ASCMarine::BeginPlay()
 {
@@ -56,6 +57,11 @@ void ASCMarine::Tick(float DeltaTime)
 
 void ASCMarine::OnSkillUse(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
 {
+	Cast<ASC_MainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_MarineOnSkillUse(this, SelectedUnit, CurrentSkillClass);
+}
+
+void ASCMarine::OnSkillUse_Impl(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
+{
 	if (SelectedUnit == this && AllKindMarineSkills.Find(CurrentSkillClass) != INDEX_NONE)
 	{
 		auto CurrentSkillHandleFunc = *MarineSkillsHandleMap.Find(CurrentSkillClass);
@@ -76,6 +82,7 @@ void ASCMarine::OnStimpackUsage()
 
 	GetWorld()->GetTimerManager().ClearTimer(StimpackUsageTimer);
 	GetWorld()->GetTimerManager().SetTimer(StimpackUsageTimer, this, &ASCMarine::OnFinishStimpackUsage, 3.0f, false);
+	//Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_MarineOnStimpackUsage(this);
 }
 
 void ASCMarine::OnFinishStimpackUsage()
@@ -160,6 +167,7 @@ void ASCMarine::OnMarineDeath()
 	OnFriendlyCharacterClicked(nullptr);
 	SetCurrentGoal(nullptr);
 
+	HitBox->DestroyComponent();
 	HealthWidgetComponent->DestroyComponent();
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -203,7 +211,10 @@ void ASCMarine::Attack()
 		Cast<AAIController>(GetController())->ClearFocus(EAIFocusPriority::LastFocusPriority);
 		Cast<UCharacterMovementComponent>(GetMovementComponent())->RotationRate = DefaultRotationRate;
 		
-		if(CharacterState != EAICharacterState::INDIVIDUAL_ATTACK) AttackTargetCharacter = nullptr;
+		if (CharacterState != EAICharacterState::INDIVIDUAL_ATTACK)
+		{
+			AttackTargetCharacter = nullptr;
+		}
 	}
 	else
 	{

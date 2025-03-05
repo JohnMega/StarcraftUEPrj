@@ -2,6 +2,7 @@
 
 
 #include "UI/UnitSelectMenuWB.h"
+#include "FunctionLibraries/SCFunctionLibrary.h"
 #include "UI/InGameMenuWB.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -13,6 +14,8 @@
 #include "AI/Characters/Minion/SCMinion.h"
 #include "Kismet/GameplayStatics.h"
 #include "SCUnitTestGameMode.h"
+#include "GameStates/SCGameState.h"
+#include "Player/SC_UnitTestMainCamera.h"
 
 bool UUnitSelectMenuWB::Initialize()
 {
@@ -52,39 +55,49 @@ void UUnitSelectMenuWB::OnRedTeamMenuButtonClicked()
 
 void UUnitSelectMenuWB::OnMarineSpawnButtonClicked()
 {
-	UnitSpawn<ASCMarine>(MarineClass.Get());
+	Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnMarineSpawnButtonClicked((int32)TeamType);
 }
 
 void UUnitSelectMenuWB::OnMinionSpawnButtonClicked()
 {
-	UnitSpawn<ASCMinion>(MinionClass.Get());
+	Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnMinionSpawnButtonClicked((int32)TeamType);
 }
 
-template <typename T>
-void UUnitSelectMenuWB::UnitSpawn(UClass* UnitClass)
+void UUnitSelectMenuWB::OnMarineSpawnButtonClicked_Impl(EUnitSelectMenuType CurrTeamType)
 {
-	auto SpawnPointClass = (TeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? FriendUnitsSpawnPointClass.Get() : EnemyUnitsSpawnPointClass.Get());
+	UnitSpawn(MarineClass.Get(), CurrTeamType);
+}
+
+void UUnitSelectMenuWB::OnMinionSpawnButtonClicked_Impl(EUnitSelectMenuType CurrTeamType)
+{
+	UnitSpawn(MinionClass.Get(), CurrTeamType);
+}
+
+void UUnitSelectMenuWB::UnitSpawn(UClass* UnitClass, EUnitSelectMenuType CurrTeamType)
+{
+	auto SpawnPointClass = (CurrTeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? FriendUnitsSpawnPointClass.Get() : EnemyUnitsSpawnPointClass.Get());
 	auto UnitsSpawnPoint = Cast<AFriendUnitsSpawnPoint>(UGameplayStatics::GetActorOfClass(GetWorld(), SpawnPointClass));
 	if (!UnitsSpawnPoint) return;
 
 	auto SCAIController = GetWorld()->SpawnActor<ASCAIController>(AIControllerClass.Get());
-	auto SCUnit = GetWorld()->SpawnActor<T>(UnitClass, UnitsSpawnPoint->GetBestSpawnPoint()
-		, FRotator(0, TeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? 0 : 180, 0));
+	auto SCUnit = GetWorld()->SpawnActor<ASCAICharacter>(UnitClass, UnitsSpawnPoint->GetBestSpawnPoint()
+		, FRotator(0, CurrTeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? 0 : 180, 0));
 	if (!SCUnit) return;
-	SCUnit->SetFriendly(TeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? true : false);
+	SCUnit->SetFriendly(CurrTeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? true : false);
 
 	SCAIController->Possess(SCUnit);
 	SCAIController->SetCharacterClass(UnitClass);
+	SCAIController->SetTeamAttitude(CurrTeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE ? ETeamAttitude::Friendly : ETeamAttitude::Hostile);
 
-	auto SCGameMode = Cast<ASCUnitTestGameMode>(GetWorld()->GetAuthGameMode());
-	if (!SCGameMode) return;
+	auto SCGameState = Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (!SCGameState) return;
 
-	if (TeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE)
+	if (CurrTeamType == EUnitSelectMenuType::BLUE_TEAM_TYPE)
 	{
-		SCGameMode->SetTotalSpawnedFriendCharactersCount(SCGameMode->GetTotalSpawnedFriendCharactersCount() + 1);
+		SCGameState->SetTotalSpawnedFriendCharactersCount(SCGameState->GetTotalSpawnedFriendCharactersCount() + 1);
 	}
 	else
 	{
-		SCGameMode->SetTotalSpawnedEnemyCharactersCount(SCGameMode->GetTotalSpawnedEnemyCharactersCount() + 1);
+		SCGameState->SetTotalSpawnedEnemyCharactersCount(SCGameState->GetTotalSpawnedEnemyCharactersCount() + 1);
 	}
 }

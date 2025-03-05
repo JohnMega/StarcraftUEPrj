@@ -10,6 +10,7 @@
 #include "Player/SCPlayerController.h"
 #include "AI/SCAICharacter.h"
 #include "AI/Characters/Marine/SCMarine.h"
+#include "AI/Characters/Minion/SCMinion.h"
 #include "AI/SCAIController.h"
 #include "Components/CameraZoomComponent.h"
 #include "Components/MainCameraMovementComponent.h"
@@ -27,6 +28,9 @@
 #include "NiagaraComponent.h"
 #include "Player/CameraMoveZone.h"
 #include "PlotBomb/PlotBomb.h"
+#include "Engine/ActorChannel.h"
+#include "Net/UnrealNetwork.h"
+#include "NiagaraFunctionLibrary.h"
 
 ASC_MainCamera::ASC_MainCamera(const FObjectInitializer& ObjectInitializer)
 {
@@ -184,13 +188,19 @@ void ASC_MainCamera::OnGameMenuEnable(const FInputActionValue& Value)
 void ASC_MainCamera::OnUseStimpack(const FInputActionValue& Value)
 {
 	for (int32 i = 0; i < SelectedUnits.Num(); ++i)
+	{
+		if (SelectedUnits[i]->IsDead()) continue;
 		OnSkillUse.Broadcast(SelectedUnits[i], StimpackSkill.Get());
+	}
 }
 
 void ASC_MainCamera::OnUseHealthKit(const FInputActionValue& Value)
 {
 	for (int32 i = 0; i < SelectedUnits.Num(); ++i)
+	{
+		if (SelectedUnits[i]->IsDead()) continue;
 		OnSkillUse.Broadcast(SelectedUnits[i], HealthKitSkill.Get());
+	}
 }
 
 void ASC_MainCamera::OnUseMinionRepair(const FInputActionValue& Value)
@@ -356,8 +366,8 @@ void ASC_MainCamera::OnSelectOneUnitReleased(const FInputActionValue& Value)
 void ASC_MainCamera::OnCreateGoal(const FInputActionValue& Value)
 {
 	if (!GetWorld() || !SelectedUnits.Num()) return;
-	
-	ASCPlayerController* PlayerController = Cast<ASCPlayerController>(GetOwner());
+
+	ASCPlayerController* PlayerController = Cast<ASCPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 	if (!PlayerController) return;
 
 	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Camera), false, CursorHitResult);
@@ -370,59 +380,71 @@ void ASC_MainCamera::OnCreateGoal(const FInputActionValue& Value)
 
 			FVector GoalActorLocation = { CursorHitResult.ImpactPoint.X, CursorHitResult.ImpactPoint.Y, CursorHitResult.ImpactPoint.Z + 0.1F };
 			auto GoalActor = GetWorld()->SpawnActor<ASCGoalActor>(GoalActorClass.Get(), FTransform(FRotator::ZeroRotator, GoalActorLocation));
+			GoalActor->SetNiagaraColor(static_cast<EAICharacterState>(CurrentState));
+			GoalActor->SetReplicates(false);
 
-			if (GoalActor)
-			{
-				if (CurrentState == EMainCameraStates::DEFAULT)
-				{
-					auto Character = Cast<ASCAICharacter>(CursorHitResult.GetActor());
-					if (Character)
-					{
-						GoalActor->SetActorLocation(Character->GetMesh()->GetSocketLocation(CharacterInGoalSpawnDotName));
-
-						if (!Character->IsFriendly())
-						{
-							SelectedUnits[i]->SetAttackTargetCharacter(Character);
-							SelectedUnits[i]->SetCurrentGoal(GoalActor);
-							SelectedUnits[i]->OnAddNewGoalActor(static_cast<EAICharacterState>(EMainCameraStates::INDIVIDUAL_ATTACK));
-							continue;
-						}
-					}
-
-					SelectedUnits[i]->SetCurrentGoal(GoalActor);
-					SelectedUnits[i]->OnAddNewGoalActor(static_cast<EAICharacterState>(CurrentState));
-				}
-				else if (CurrentState == EMainCameraStates::ATTACK)
-				{
-					auto Character = Cast<ASCAICharacter>(CursorHitResult.GetActor());
-					if (Character)
-					{
-						GoalActor->SetActorLocation(Character->GetMesh()->GetSocketLocation(CharacterInGoalSpawnDotName));
-						if (SelectedUnits[i] != Character)
-						{
-							SelectedUnits[i]->SetAttackTargetCharacter(Character);
-							SelectedUnits[i]->SetCurrentGoal(GoalActor);
-							SelectedUnits[i]->OnAddNewGoalActor(static_cast<EAICharacterState>(EMainCameraStates::INDIVIDUAL_ATTACK));
-						}
-						else
-						{
-							GoalActor->Destroy();
-						}
-					}
-					else
-					{
-						SelectedUnits[i]->SetCurrentGoal(GoalActor);
-						SelectedUnits[i]->OnAddNewGoalActor(static_cast<EAICharacterState>(CurrentState));
-					}
-				}
-
-				
-			}
+			bool IsCHRCharacterFriendly = Cast<ASCAICharacter>(CursorHitResult.GetActor()) ? Cast<ASCAICharacter>(CursorHitResult.GetActor())->bIsFriendly : false;
+			Server_OnCreateGoal(SelectedUnits[i], CursorHitResult.ImpactPoint, CursorHitResult.GetActor(), IsCHRCharacterFriendly, GoalActor->GetUniqueID(), (int32)CurrentState);
 		}
 	}
 
 	CurrentState = EMainCameraStates::DEFAULT;
 	OnStateChange.Broadcast(CurrentState);
+}
+
+void ASC_MainCamera::Server_OnCreateGoal_Implementation(ASCAICharacter* SelectedUnit, const FVector& CHRImpactPoint, AActor* CHRActor, bool IsCHRCharacterFriendly
+	, int32 ClientGoalActorID, int32 CurrentClientState)
+{
+	FVector GoalActorLocation = { CHRImpactPoint.X, CHRImpactPoint.Y, CHRImpactPoint.Z + 0.1F };
+	auto GoalActor = GetWorld()->SpawnActor<ASCGoalActor>(GoalActorClass.Get(), FTransform(FRotator::ZeroRotator, GoalActorLocation));
+	GoalActor->SetClientGoalID(ClientGoalActorID); GoalActor->SetIsRelatedToClient(true);
+	GoalActor->SetActorHiddenInGame(true);
+
+	if (GoalActor)
+	{
+		if ((EMainCameraStates)CurrentClientState == EMainCameraStates::DEFAULT)
+		{
+			auto Character = Cast<ASCAICharacter>(CHRActor);
+			if (Character)
+			{
+				GoalActor->SetActorLocation(Character->GetMesh()->GetSocketLocation(CharacterInGoalSpawnDotName));
+
+				if (!IsCHRCharacterFriendly)
+				{
+					SelectedUnit->SetAttackTargetCharacter(Character);
+					SelectedUnit->SetCurrentGoal(GoalActor);
+					SelectedUnit->OnAddNewGoalActor(static_cast<EAICharacterState>(EMainCameraStates::INDIVIDUAL_ATTACK));
+					return;
+				}
+			}
+
+			SelectedUnit->SetCurrentGoal(GoalActor);
+			SelectedUnit->OnAddNewGoalActor(static_cast<EAICharacterState>(CurrentClientState));
+		}
+		else if ((EMainCameraStates)CurrentClientState == EMainCameraStates::ATTACK)
+		{
+			auto Character = Cast<ASCAICharacter>(CHRActor);
+			if (Character)
+			{
+				GoalActor->SetActorLocation(Character->GetMesh()->GetSocketLocation(CharacterInGoalSpawnDotName));
+				if (SelectedUnit != Character)
+				{
+					SelectedUnit->SetAttackTargetCharacter(Character);
+					SelectedUnit->SetCurrentGoal(GoalActor);
+					SelectedUnit->OnAddNewGoalActor(static_cast<EAICharacterState>(EMainCameraStates::INDIVIDUAL_ATTACK));
+				}
+				else
+				{
+					GoalActor->Destroy();
+				}
+			}
+			else
+			{
+				SelectedUnit->SetCurrentGoal(GoalActor);
+				SelectedUnit->OnAddNewGoalActor(static_cast<EAICharacterState>(CurrentClientState));
+			}
+		}
+	}
 }
 
 void ASC_MainCamera::CameraZoom(const FInputActionValue& Value)
@@ -451,4 +473,57 @@ void ASC_MainCamera::OnAttackState(const FInputActionValue& Value)
 {
 	CurrentState = EMainCameraStates::ATTACK;
 	OnStateChange.Broadcast(CurrentState);
+}
+
+// ASCGoalActorNetHelper
+/////////////////////////////////////////////////////////////////////////////////
+
+void ASC_MainCamera::Multicast_GoalActorEndPlay_Implementation(int32 ClientGoalActorID)
+{
+	TArray<AActor*> AllGoalActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCGoalActor::StaticClass(), AllGoalActors);
+	for (int32 i = 0; i < AllGoalActors.Num(); ++i)
+	{
+		if (ClientGoalActorID == AllGoalActors[i]->GetUniqueID())
+		{
+			AllGoalActors[i]->Destroy();
+			break;
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+
+// UHealthComponentNetHelper
+
+void ASC_MainCamera::Server_HealthComponentOnTakeAnyDamage_Implementation(AActor* AttackedCharacter, float Damage)
+{
+	Multicast_HealthComponentOnTakeAnyDamage(AttackedCharacter, Damage);
+}
+
+void ASC_MainCamera::Multicast_HealthComponentOnTakeAnyDamage_Implementation(AActor* AttackedCharacter, float Damage)
+{
+	AttackedCharacter->GetComponentByClass<UHealthComponent>()->OnTakeAnyDamageImpl(Damage);
+}
+
+// ASCMarineNetHelper
+
+void ASC_MainCamera::Server_MarineOnSkillUse_Implementation(ASCAICharacter* Marine, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
+{
+	Multicast_MarineOnSkillUse(Marine, SelectedUnit, CurrentSkillClass);
+}
+
+void ASC_MainCamera::Multicast_MarineOnSkillUse_Implementation(ASCAICharacter* Marine, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
+{
+	Cast<ASCMarine>(Marine)->OnSkillUse_Impl(SelectedUnit, CurrentSkillClass);
+}
+
+void ASC_MainCamera::Server_MinionOnSkillUse_Implementation(ASCAICharacter* Minion, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
+{
+	Multicast_MinionOnSkillUse(Minion, SelectedUnit, CurrentSkillClass);
+}
+
+void ASC_MainCamera::Multicast_MinionOnSkillUse_Implementation(ASCAICharacter* Minion, ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
+{
+	Cast<ASCMinion>(Minion)->OnSkillUse_Impl(SelectedUnit, CurrentSkillClass);
 }

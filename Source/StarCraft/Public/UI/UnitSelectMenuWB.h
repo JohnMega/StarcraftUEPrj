@@ -11,6 +11,7 @@ class UImage;
 class UTextBlock;
 class ASCMarine;
 class ASCMinion;
+class ASCAICharacter;
 class ASCAIController;
 class AFriendUnitsSpawnPoint;
 class AEnemyUnitsSpawnPoint;
@@ -70,8 +71,7 @@ protected:
 	TSubclassOf<ASCAIController> AIControllerClass;
 
 private:
-	template <typename T>
-	void UnitSpawn(UClass* UnitClass);
+	void UnitSpawn(UClass* UnitClass, EUnitSelectMenuType CurrTeamType);
 
 	UFUNCTION()
 	void OnMarineSpawnButtonClicked();
@@ -87,4 +87,7 @@ private:
 
 public:
 	virtual bool Initialize() override;
+
+	void OnMarineSpawnButtonClicked_Impl(EUnitSelectMenuType CurrTeamType);
+	void OnMinionSpawnButtonClicked_Impl(EUnitSelectMenuType CurrTeamType);
 };

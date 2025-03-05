@@ -29,8 +29,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnTimerFinishSignature OnTimerFinish;
 
-private:
-	UFUNCTION()
+protected:
+	UFUNCTION(BlueprintCallable)
 	void SetTimerText();
 
 public:

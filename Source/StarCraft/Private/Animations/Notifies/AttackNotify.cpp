@@ -8,6 +8,7 @@
 #include "Components/HealthComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Sound/SoundCue.h"
+#include "Player/SCPlayerController.h"
 
 void UAttackNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
@@ -19,9 +20,7 @@ void UAttackNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 	auto HealthComponent = Character->GetComponentByClass<UHealthComponent>();
 	if (!HealthComponent) return;
 	
-	UNiagaraFunctionLibrary::SpawnSystemAttached(Character->GetAttackTargetCharacter()->GetNiagaraBlood(), Character->GetAttackTargetCharacter()->GetMesh(), NAME_None
-		, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
-	Character->GetAttackTargetCharacter()->TakeDamage(HealthComponent->GetDamage(), FDamageEvent(), Cast<AController>(Character->GetOwner()), Character);
+	Cast<ASCPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->Server_AttackNotifyFXSpawn(Character);
 
 	if (AttackSound)
 	{

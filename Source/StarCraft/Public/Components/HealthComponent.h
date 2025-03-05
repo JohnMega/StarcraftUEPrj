@@ -35,12 +35,14 @@ private:
 
 protected:
 	virtual void BeginPlay() override;
+	//virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 		
 public:
 	UHealthComponent();
 
 	UFUNCTION()
 	void OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	void OnTakeAnyDamageImpl(float Damage);
 
 	UFUNCTION()
 	void CharacterDeath();

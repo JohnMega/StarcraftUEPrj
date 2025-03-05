@@ -15,6 +15,10 @@ class STARCRAFT_API ASCGoalActor : public AActor
 {
 	GENERATED_BODY()
 
+private:
+	bool bIsRelatedToClient = false;
+	int32 ClientGoalActorID;
+	
 protected:
 	ASCPlayerController* SCPlayerController;
 
@@ -26,6 +30,7 @@ protected:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	ASCGoalActor();
@@ -33,6 +38,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void SetNiagaraColor(EAICharacterState CharacterState);
+	void SetIsRelatedToClient(bool IsRelatedToClient) { bIsRelatedToClient = IsRelatedToClient; }
+	void SetClientGoalID(int32 NewClientGoalActorID) { ClientGoalActorID = NewClientGoalActorID; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetNiagaraVisible(bool Visible);

@@ -7,6 +7,7 @@
 #include "SCPlayerController.generated.h"
 
 class ASCGoalActor;
+class ASCAICharacter;
 
 UCLASS()
 class STARCRAFT_API ASCPlayerController : public APlayerController
@@ -15,4 +16,14 @@ class STARCRAFT_API ASCPlayerController : public APlayerController
 
 protected:
 	virtual void BeginPlay() override;
+
+// UAttackNotifyNetHelper
+public:
+	UFUNCTION(Server, Unreliable)
+	void Server_AttackNotifyFXSpawn(ASCAICharacter* AICharacter);
+
+// AWavesNPCSpawnerNetHelper
+public:
+	UFUNCTION(Server, Reliable)
+	void Server_UnitSpawn(UClass* UnitClass, int32 CurrTeamType);
 };

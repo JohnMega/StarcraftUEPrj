@@ -20,11 +20,11 @@ class STARCRAFT_API UMainCameraWidgetComponent : public UActorComponent
 
 protected:
 	TArray<UUserWidget*> CreatedWidgets;
-	USelectBoxWB* SelectBoxWidget;
-	UUnitTalkWB* UnitTalkWidget;
-	UUnitSkillsWB* UnitSkillsWidget;
-	UMinimapWB* MinimapWidget;
-	UGameMenuWB* GameMenuWidget;
+	USelectBoxWB* SelectBoxWidget = nullptr;
+	UUnitTalkWB* UnitTalkWidget = nullptr;
+	UUnitSkillsWB* UnitSkillsWidget = nullptr;
+	UMinimapWB* MinimapWidget = nullptr;
+	UGameMenuWB* GameMenuWidget = nullptr;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Widget")

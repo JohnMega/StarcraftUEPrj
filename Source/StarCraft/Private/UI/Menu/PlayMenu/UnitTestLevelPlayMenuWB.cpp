@@ -11,9 +11,6 @@ bool UUnitTestLevelPlayMenuWB::Initialize()
 {
 	bool InitRes = Super::Initialize();
 
-	if (PlayButton)
-		PlayButton->OnClicked.AddDynamic(this, &UUnitTestLevelPlayMenuWB::OnPlayButtonClicked);
-
 	if (GetWorld()->GetAuthGameMode())
 		UnitTestMediaPlayer->OpenSource(UnitTestMediaSource);
 
@@ -28,9 +25,4 @@ void UUnitTestLevelPlayMenuWB::SetVisibility(ESlateVisibility InVisibility)
 		UnitTestMediaPlayer->OpenSource(UnitTestMediaSource);
 	else if (InVisibility == ESlateVisibility::Hidden)
 		UnitTestMediaPlayer->Close();
-}
-
-void UUnitTestLevelPlayMenuWB::OnPlayButtonClicked()
-{
-	UGameplayStatics::OpenLevel(GetWorld(), UnitTestLevelName);
 }

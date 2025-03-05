@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
 #include "Components/Overlay.h"
+#include "GameStates/SCGameState.h"
 
 bool UGameMenuWB::Initialize()
 {
@@ -35,7 +36,10 @@ void UGameMenuWB::OnGameMenuEnable()
 {
 	if (UGameplayStatics::IsGamePaused(GetWorld())) return;
 
-	UGameplayStatics::SetGamePaused(GetWorld(), true);
+	if (GetWorld()->GetNetMode() == NM_Standalone)
+	{
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
+	}
 	SetVisibility(ESlateVisibility::Visible);
 }
 
@@ -56,6 +60,11 @@ void UGameMenuWB::OnSettingsButtonClicked()
 
 void UGameMenuWB::OnExitButtonClicked()
 {
+	if (GetWorld()->GetNetMode() != NM_Standalone)
+	{
+		Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()))->DestroySession();
+	}
+
 	UGameplayStatics::OpenLevel(GetWorld(), ManuLevelName);
 }
 

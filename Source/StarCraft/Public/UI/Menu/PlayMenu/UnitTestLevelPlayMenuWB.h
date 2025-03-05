@@ -17,7 +17,10 @@ class STARCRAFT_API UUnitTestLevelPlayMenuWB : public UUserWidget
 	
 protected:
 	UPROPERTY(meta = (BindWidget))
-	UButton* PlayButton;
+	UButton* CreateServerButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* FindGameButton;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Media")
 	UMediaPlayer* UnitTestMediaPlayer;
@@ -27,10 +30,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Levels Names")
 	FName UnitTestLevelName = "Minimal_Default";
-
-private:
-	UFUNCTION()
-	void OnPlayButtonClicked();
 
 public:
 	virtual bool Initialize() override;

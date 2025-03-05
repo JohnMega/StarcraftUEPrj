@@ -21,6 +21,7 @@
 #include "Skills/MainSkillsActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Player/SC_MainCamera.h"
 
 ASCMinion::ASCMinion()
 {
@@ -88,6 +89,11 @@ void ASCMinion::RepairKeyButtonComponentVisibleCheck()
 
 void ASCMinion::OnSkillUse(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
 {
+	Cast<ASC_MainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_MinionOnSkillUse(this, SelectedUnit, CurrentSkillClass);
+}
+
+void ASCMinion::OnSkillUse_Impl(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass)
+{
 	if (SelectedUnit == this && AllKindMinionSkills.Find(CurrentSkillClass) != INDEX_NONE)
 	{
 		auto CurrentSkillHandleFunc = *MinionSkillsHandleMap.Find(CurrentSkillClass);
@@ -136,7 +142,7 @@ void ASCMinion::OnHealthKitTimerCooldown()
 
 bool ASCMinion::IsCanAttack() const
 {
-	if (!AttackTargetCharacter) return false;
+	if (!IsHaveAttackTarget()) return false;
 
 	return (GetActorLocation() - AttackTargetCharacter->GetActorLocation()).Length() <= AttackTargetCharacter->GetSelectedCircleDiametrVector().Length();
 }
@@ -147,6 +153,7 @@ void ASCMinion::OnMinionDeath()
 	OnFriendlyCharacterClicked(nullptr);
 	SetCurrentGoal(nullptr);
 
+	HitBox->DestroyComponent();
 	HealthWidgetComponent->DestroyComponent();
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -187,7 +194,10 @@ void ASCMinion::Attack()
 		Cast<AAIController>(GetController())->ClearFocus(EAIFocusPriority::LastFocusPriority);
 		Cast<UCharacterMovementComponent>(GetMovementComponent())->RotationRate = DefaultRotationRate;
 
-		if (CharacterState != EAICharacterState::INDIVIDUAL_ATTACK) AttackTargetCharacter = nullptr;
+		if (CharacterState != EAICharacterState::INDIVIDUAL_ATTACK)
+		{
+			AttackTargetCharacter = nullptr;
+		}
 	}
 }
 

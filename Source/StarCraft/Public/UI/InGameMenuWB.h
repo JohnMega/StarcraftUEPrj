@@ -65,4 +65,10 @@ public:
 	virtual bool Initialize() override;
 
 	void BeginPlay();
+	void OnStartGameButtonClicked_InGame_Implementation();
+	void OnStartGameButtonClicked_Game_Implementation();
+	void OnBackToInGameMenuButtonClicked_InGame_ServerPartImplementation();
+	void OnBackToInGameMenuButtonClicked_InGame_MulticastPartImplementation();
+	void OnBackToInGameMenuButtonClicked_Game_ServerPartImplementation();
+	void OnBackToInGameMenuButtonClicked_Game_MulticastPartImplementation();
 };

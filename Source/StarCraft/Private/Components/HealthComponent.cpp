@@ -2,10 +2,13 @@
 
 
 #include "Components/HealthComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "AI/SCAICharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "UI/HealthBarWB.h"
+#include "Net/UnrealNetwork.h"
+#include "Player/SC_MainCamera.h"
 
 UHealthComponent::UHealthComponent()
 {
@@ -20,6 +23,11 @@ void UHealthComponent::BeginPlay()
 }
 
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
+{
+	Cast<ASC_MainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_HealthComponentOnTakeAnyDamage(GetOwner(), Damage);
+}
+
+void UHealthComponent::OnTakeAnyDamageImpl(float Damage)
 {
 	if (IsDead()) return;
 

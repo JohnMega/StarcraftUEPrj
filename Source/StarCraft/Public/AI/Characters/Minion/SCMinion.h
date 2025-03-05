@@ -103,16 +103,13 @@ public:
 	ASCMinion();
 
 	virtual void Tick(float DeltaTime) override;
-
 	virtual void Attack() override;
 	virtual void OnDeath() override;
 
 	EMinionState GetMinionState() const;
-
-	// Used with Marine MinionRepair Skill
-	void OnMinionRepairSkillUsage(UNiagaraSystem* MinionRepairNiagara);
-
+	void OnMinionRepairSkillUsage(UNiagaraSystem* MinionRepairNiagara); // Used with Marine MinionRepair Skill
 	void RepairKeyButtonComponentVisibleCheck();
+	void OnSkillUse_Impl(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsInEnableState() const;

@@ -133,6 +133,7 @@ public:
 	virtual void OnDeath() override;
 
 	const FMinionRepairSkill& GetMinionRepairSkillVars() const;
+	void OnSkillUse_Impl(ASCAICharacter* SelectedUnit, UClass* CurrentSkillClass);
 
 	UFUNCTION(BlueprintCallable)
 	float GetMarineAnimationsSpeedRate() const;

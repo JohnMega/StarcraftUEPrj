@@ -2,7 +2,9 @@
 
 
 #include "AI/SCGoalActor.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/SCPlayerController.h"
+#include "Player/SC_MainCamera.h"
 #include "NiagaraComponent.h"
 #include "AI/SCAICharacter.h"
 
@@ -17,6 +19,17 @@ ASCGoalActor::ASCGoalActor()
 void ASCGoalActor::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ASCGoalActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (bIsRelatedToClient)
+	{
+		auto PlayerPawn = Cast<ASC_MainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+		if(PlayerPawn) PlayerPawn->Multicast_GoalActorEndPlay(ClientGoalActorID);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ASCGoalActor::Tick(float DeltaTime)

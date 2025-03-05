@@ -26,7 +26,9 @@ class STARCRAFT_API ASCAIController : public AAIController
 	GENERATED_BODY()
 
 private:
+	class UAISenseConfig_Sight* SightConfig;
 	FCharacterStartData CharacterStartData;
+	ETeamAttitude::Type TeamAttitude = ETeamAttitude::Hostile;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
@@ -35,9 +37,12 @@ protected:
 protected:
 	void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override { return TeamAttitude; }
 
 public:
-	ASCAIController();
+	ASCAIController(const FObjectInitializer& Init);
+
+	void SetTeamAttitude(ETeamAttitude::Type NetTeamAttitude);
 
 	UFUNCTION(BlueprintCallable)
 	const FCharacterStartData& GetCharacterStartData() const;

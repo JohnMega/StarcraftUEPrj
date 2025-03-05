@@ -2,6 +2,7 @@
 
 
 #include "UI/InGameMenuWB.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "UI/UnitSelectMenuWB.h"
 #include "Player/SC_MainCamera.h"
 #include "Components/Button.h"
@@ -13,6 +14,9 @@
 #include "AI/SCAICharacter.h"
 #include "AI/SCGoalActor.h"
 #include "AI/SCAIController.h"
+#include "GameStates/SCGameState.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Player/SC_UnitTestMainCamera.h"
 
 bool UInGameMenuWB::Initialize()
 {
@@ -37,74 +41,107 @@ void UInGameMenuWB::BeginPlay()
 
 void UInGameMenuWB::OnBackToInGameMenuButtonClicked()
 {
-	auto SCGameMode = Cast<ASCUnitTestGameMode>(GetWorld()->GetAuthGameMode());
-	if (!SCGameMode) return;
+	auto SCGameState = Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (!SCGameState) return;
 
-	if (SCGameMode->GetGameState() == EGameState::INGAME_MENU)
+	if (SCGameState->GetGameState() == EGameState::INGAME_MENU)
 	{
-		SCGameMode->SetGameState(EGameState::INGAME_MENU);
-
-		TArray<AActor*> AllAICharacters;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAICharacter::StaticClass(), AllAICharacters);
-		for (int32 i = 0; i < AllAICharacters.Num(); ++i)
-		{
-			AllAICharacters[i]->Destroy();
-		}
+		Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnBackToInGameMenuButtonClicked_InGame_MulticastPart();
+		Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnBackToInGameMenuButtonClicked_InGame_ServerPart();
 	}
-	else if (SCGameMode->GetGameState() == EGameState::GAME)
+	else if (SCGameState->GetGameState() == EGameState::GAME)
 	{
-		UnitSelectMenuWB->SetVisibility(ESlateVisibility::Visible);
-		StartGameButtonText->SetText(FText::FromName(StartButtonText));
-		BackToInGameMenuButtonText->SetText(FText::FromName(ClearButtonText));
-		SCGameMode->SetGameState(EGameState::INGAME_MENU);
-
-		TArray<AActor*> AllAICharacters;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAICharacter::StaticClass(), AllAICharacters);
-		for (int32 i = 0; i < AllAICharacters.Num(); ++i)
-		{
-			Cast<ASCAICharacter>(AllAICharacters[i])->DestroySCCharacter();
-		}
-
-		TArray<AActor*> AllAIControllers;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAIController::StaticClass(), AllAIControllers);
-		for (int32 i = 0; i < AllAIControllers.Num(); ++i)
-		{
-			auto AIController = Cast<ASCAIController>(AllAIControllers[i]);
-
-			auto SCCharacter = GetWorld()->SpawnActor<ASCAICharacter>(AIController->GetCharacterStartData().CharacterClass, AIController->GetCharacterStartData().StartCharacterPosition
-				, FRotator(0, AIController->GetCharacterStartData().IsCharacterFriendly ? 270 : 90, 0));
-			if (!SCCharacter) return;
-			SCCharacter->SetFriendly(AIController->GetCharacterStartData().IsCharacterFriendly);
-
-			AIController->Possess(SCCharacter);
-		}
+		Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnBackToInGameMenuButtonClicked_Game_MulticastPart();
+		Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnBackToInGameMenuButtonClicked_Game_ServerPart();
 	}
+}
+
+void UInGameMenuWB::OnBackToInGameMenuButtonClicked_InGame_ServerPartImplementation()
+{
+	TArray<AActor*> AllAICharacters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAICharacter::StaticClass(), AllAICharacters);
+	for (int32 i = 0; i < AllAICharacters.Num(); ++i)
+	{
+		AllAICharacters[i]->Destroy();
+	}
+}
+
+void UInGameMenuWB::OnBackToInGameMenuButtonClicked_InGame_MulticastPartImplementation()
+{
+	auto SCGameState = Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	SCGameState->SetGameState(EGameState::INGAME_MENU);
+}
+
+void UInGameMenuWB::OnBackToInGameMenuButtonClicked_Game_ServerPartImplementation()
+{
+	TArray<AActor*> AllAICharacters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAICharacter::StaticClass(), AllAICharacters);
+	for (int32 i = 0; i < AllAICharacters.Num(); ++i)
+	{
+		Cast<ASCAICharacter>(AllAICharacters[i])->DestroySCCharacter();
+	}
+
+	TArray<AActor*> AllAIControllers;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAIController::StaticClass(), AllAIControllers);
+	for (int32 i = 0; i < AllAIControllers.Num(); ++i)
+	{
+		auto AIController = Cast<ASCAIController>(AllAIControllers[i]);
+
+		auto SCCharacter = GetWorld()->SpawnActor<ASCAICharacter>(AIController->GetCharacterStartData().CharacterClass, AIController->GetCharacterStartData().StartCharacterPosition
+			, FRotator(0, AIController->GetCharacterStartData().IsCharacterFriendly ? 270 : 90, 0));
+		if (!SCCharacter) return;
+		SCCharacter->SetFriendly(AIController->GetCharacterStartData().IsCharacterFriendly);
+
+		AIController->Possess(SCCharacter);
+	}
+}
+
+void UInGameMenuWB::OnBackToInGameMenuButtonClicked_Game_MulticastPartImplementation()
+{
+	UnitSelectMenuWB->SetVisibility(ESlateVisibility::Visible);
+	StartGameButtonText->SetText(FText::FromName(StartButtonText));
+	BackToInGameMenuButtonText->SetText(FText::FromName(ClearButtonText));
+
+	auto SCGameState = Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	SCGameState->SetGameState(EGameState::INGAME_MENU);
 }
 
 void UInGameMenuWB::OnStartGameButtonClicked()
 {
-	auto SCGameMode = Cast<ASCUnitTestGameMode>(GetWorld()->GetAuthGameMode());
-	if (!SCGameMode) return;
+	auto SCGameState = Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	if (!SCGameState) return;
 
-	if (SCGameMode->GetGameState() == EGameState::INGAME_MENU)
+	if (SCGameState->GetGameState() == EGameState::INGAME_MENU)
 	{
-		StartGameButtonText->SetText(FText::FromName(AttackButtonText));
-		BackToInGameMenuButtonText->SetText(FText::FromName(BackToMenuButtonText));
-		UnitSelectMenuWB->SetVisibility(ESlateVisibility::Hidden);
-		SCGameMode->SetGameState(EGameState::GAME);
+		Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnStartGameButtonClicked_InGame();
 	}
-	else if (SCGameMode->GetGameState() == EGameState::GAME)
+	else if (SCGameState->GetGameState() == EGameState::GAME)
 	{
-		TArray<AActor*> AllAICharacters;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAICharacter::StaticClass(), AllAICharacters);
+		Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_OnStartGameButtonClicked_Game();
+	}
+}
 
-		for (int32 i = 0; i < AllAICharacters.Num(); ++i)
-		{
-			auto Character = Cast<ASCAICharacter>(AllAICharacters[i]);
-			if (!Character) continue;
+void UInGameMenuWB::OnStartGameButtonClicked_InGame_Implementation()
+{
+	StartGameButtonText->SetText(FText::FromName(AttackButtonText));
+	BackToInGameMenuButtonText->SetText(FText::FromName(BackToMenuButtonText));
+	UnitSelectMenuWB->SetVisibility(ESlateVisibility::Hidden);
 
-			Character->SetCurrentGoal(GetWorld()->SpawnActor<ASCGoalActor>(ASCGoalActor::StaticClass(), FTransform(AttackPointLocation)));
-			Character->OnAddNewGoalActor(EAICharacterState::ATTACK);
-		}
+	auto SCGameState = Cast<ASCGameState>(UGameplayStatics::GetGameState(GetWorld()));
+	SCGameState->SetGameState(EGameState::GAME);
+}
+
+void UInGameMenuWB::OnStartGameButtonClicked_Game_Implementation()
+{
+	TArray<AActor*> AllAICharacters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASCAICharacter::StaticClass(), AllAICharacters);
+
+	for (int32 i = 0; i < AllAICharacters.Num(); ++i)
+	{
+		auto Character = Cast<ASCAICharacter>(AllAICharacters[i]);
+		if (!Character) continue;
+
+		Character->SetCurrentGoal(GetWorld()->SpawnActor<ASCGoalActor>(ASCGoalActor::StaticClass(), FTransform(AttackPointLocation)));
+		Character->OnAddNewGoalActor(EAICharacterState::ATTACK);
 	}
 }
