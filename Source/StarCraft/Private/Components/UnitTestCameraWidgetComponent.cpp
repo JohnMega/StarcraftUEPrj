@@ -11,19 +11,10 @@ void UUnitTestCameraWidgetComponent::BeginPlay()
 
 	if (!Cast<APawn>(GetOwner())->GetController()) return;
 
-	/*InGameMenuWidget = CreateWidget<UInGameMenuWB>(GetWorld(), InGameMenuClass.Get());
-	if (InGameMenuWidget)
-	{
-		CreatedWidgets.Add(InGameMenuWidget);
-		InGameMenuWidget->AddToViewport();
-	}*/
-
 	PlayersAcceptWidget = CreateWidget<UOTOPlayersAcceptWB>(GetWorld(), PlayersAcceptClass.Get());
 	if (PlayersAcceptWidget)
 	{
 		CreatedWidgets.Add(PlayersAcceptWidget);
 		PlayersAcceptWidget->AddToViewport();
 	}
-
-	//InGameMenuWidget->BeginPlay();
 }

@@ -33,11 +33,15 @@ void UMainCameraWidgetComponent::BeginPlay()
 		UnitSkillsWidget->AddToViewport();
 	}
 
-	UnitTalkWidget = CreateWidget<UUnitTalkWB>(GetWorld(), UnitTalkClass.Get());
-	if (UnitTalkWidget)
+	if (Cast<APawn>(GetOwner())->GetController())
 	{
-		CreatedWidgets.Add(UnitTalkWidget);
-		UnitTalkWidget->AddToViewport();
+		UnitTalkWidget = CreateWidget<UUnitTalkWB>(GetWorld(), UnitTalkClass.Get());
+		if (UnitTalkWidget)
+		{
+			CreatedWidgets.Add(UnitTalkWidget);
+			UnitTalkWidget->AddToViewport();
+		}
+		UnitTalkWidget->BeginPlay();
 	}
 
 	MinimapWidget = CreateWidget<UMinimapWB>(GetWorld(), MinimapClass.Get());
@@ -54,7 +58,6 @@ void UMainCameraWidgetComponent::BeginPlay()
 		GameMenuWidget->AddToViewport();
 	}
 
-	UnitTalkWidget->BeginPlay();
 	UnitSkillsWidget->BeginPlay();
 	GameMenuWidget->BeginPlay();
 }

@@ -387,13 +387,23 @@ void ASC_MainCamera::OnCreateGoal(const FInputActionValue& Value)
 		{
 			if (SelectedUnits[i]->IsDead()) continue;
 
-			FVector GoalActorLocation = { CursorHitResult.ImpactPoint.X, CursorHitResult.ImpactPoint.Y, CursorHitResult.ImpactPoint.Z + 0.1F };
+			FVector FinalImpactPoint;
+			if (Cast<ASCAICharacter>(CursorHitResult.GetActor()))
+			{
+				FinalImpactPoint = CursorHitResult.GetActor()->GetComponentByClass<USkeletalMeshComponent>()->GetSocketLocation("FullCircleSocket");
+			}
+			else
+			{
+				FinalImpactPoint = CursorHitResult.ImpactPoint;
+			}
+
+			FVector GoalActorLocation = { FinalImpactPoint.X, FinalImpactPoint.Y, FinalImpactPoint.Z + 0.1F };
 			auto GoalActor = GetWorld()->SpawnActor<ASCGoalActor>(GoalActorClass.Get(), FTransform(FRotator::ZeroRotator, GoalActorLocation));
 			GoalActor->SetNiagaraColor(static_cast<EAICharacterState>(CurrentState));
 			GoalActor->SetReplicates(false);
 
 			bool IsCHRCharacterFriendly = Cast<ASCAICharacter>(CursorHitResult.GetActor()) ? Cast<ASCAICharacter>(CursorHitResult.GetActor())->bIsFriendly : false;
-			Server_OnCreateGoal(SelectedUnits[i], CursorHitResult.ImpactPoint, CursorHitResult.GetActor(), IsCHRCharacterFriendly, GoalActor->GetUniqueID(), (int32)CurrentState);
+			Server_OnCreateGoal(SelectedUnits[i], FinalImpactPoint, CursorHitResult.GetActor(), IsCHRCharacterFriendly, GoalActor->GetUniqueID(), (int32)CurrentState);
 		}
 	}
 

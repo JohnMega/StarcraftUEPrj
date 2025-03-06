@@ -20,8 +20,8 @@ void UUnitTalkWB::BeginPlay()
 {
 	if (!GetWorld()) return;
 
-	auto PlayerController = *GetWorld()->GetPlayerControllerIterator();
-	if (!PlayerController.Get()) return;
+	auto PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PlayerController) return;
 
 	MainCamera = Cast<ASC_MainCamera>(PlayerController->GetPawn());
 	if (!MainCamera) return;

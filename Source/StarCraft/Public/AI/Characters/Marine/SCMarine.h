@@ -91,6 +91,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Stimpack")
 	USoundCue* StimpackSound;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Stimpack")
+	float StimpackMaxWalkSpeed = 750;
+	float OldMarineMaxWalkSpeed;
+
 	TMap<TSubclassOf<AMainSkillsActor>, void(ASCMarine::*)()> MarineSkillsHandleMap;
 	TArray<TSubclassOf<AMainSkillsActor>> AllKindMarineSkills;
 

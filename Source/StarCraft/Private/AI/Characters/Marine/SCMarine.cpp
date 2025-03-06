@@ -20,6 +20,7 @@
 #include "AI/Characters/Minion/SCMinion.h"
 #include "Sound/SoundCue.h"
 #include "Player/SC_MainCamera.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void ASCMarine::BeginPlay()
 {
@@ -80,6 +81,9 @@ void ASCMarine::OnStimpackUsage()
 
 	TakeDamage(20.0f, FDamageEvent{}, Cast<AController>(GetOwner()), this);
 
+	OldMarineMaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = StimpackMaxWalkSpeed;
+
 	GetWorld()->GetTimerManager().ClearTimer(StimpackUsageTimer);
 	GetWorld()->GetTimerManager().SetTimer(StimpackUsageTimer, this, &ASCMarine::OnFinishStimpackUsage, 3.0f, false);
 	//Cast<ASC_UnitTestMainCamera>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))->Server_MarineOnStimpackUsage(this);
@@ -88,6 +92,7 @@ void ASCMarine::OnStimpackUsage()
 void ASCMarine::OnFinishStimpackUsage()
 {
 	MarineAnimationsSpeedRate = 1.0f;
+	GetCharacterMovement()->MaxWalkSpeed = OldMarineMaxWalkSpeed;
 }
 
 void ASCMarine::OnMinionRepairUsage()
