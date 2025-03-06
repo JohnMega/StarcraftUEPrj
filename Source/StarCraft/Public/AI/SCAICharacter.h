@@ -96,6 +96,9 @@ protected:
 	UPROPERTY(EditAnywhere, Replicated, Category = "Relationship")
 	bool bIsFriendly = true;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ControlGroup")
+	UTexture2D* UnitControlGroupImage;
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Behavior")
 	UBehaviorTree* BehaviorTreeAsset;
@@ -142,6 +145,7 @@ public:
 	FVector GetSelectedCircleDiametrVector() const;
 	UNiagaraSystem* GetNiagaraBlood() const;
 	UClass* GetCharacterClass() const;
+	UTexture2D* GetUnitControlGroupImage() { return UnitControlGroupImage; }
 
 	UFUNCTION(BlueprintCallable)
 	void DestroySCCharacter(); // should call instead of Destroy()

@@ -57,6 +57,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Waves")
 	TArray<FNPCWave> NPCWaves;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Teams")
+	UMaterialInterface* RedTeamOverlayColor;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Teams")
+	UMaterialInterface* BlueTeamOverlayColor;
+
 	int32 CurrentWave;
 
 private:
@@ -68,6 +74,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SpawnNPCWaves(int32 Wave);
 
+	void SetTeamOverlayMaterial(ASCAICharacter* SCUnit, ETeamType CurrTeamType);
 	void UnitSpawn_Impl(UClass* UnitClass, ETeamType CurrTeamType);
 	int32 GetWavesCount() const { return NPCWaves.Num(); }
 	int32 GetCurrentWave() { return CurrentWave; }

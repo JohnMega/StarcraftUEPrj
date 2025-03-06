@@ -52,6 +52,7 @@ void AWavesNPCSpawner::UnitSpawn_Impl(UClass* UnitClass, ETeamType CurrTeamType)
 		, FRotator(0, CurrTeamType == ETeamType::BLUE_TEAM_TYPE ? 0 : 180, 0));
 	if (!SCUnit) return;
 	SCUnit->SetFriendly(CurrTeamType == ETeamType::BLUE_TEAM_TYPE ? true : false);
+	SetTeamOverlayMaterial(SCUnit, CurrTeamType);
 
 	SCAIController->Possess(SCUnit);
 	SCAIController->SetCharacterClass(UnitClass);
@@ -68,4 +69,9 @@ void AWavesNPCSpawner::UnitSpawn_Impl(UClass* UnitClass, ETeamType CurrTeamType)
 	{
 		SCGameState->SetTotalSpawnedEnemyCharactersCount(SCGameState->GetTotalSpawnedEnemyCharactersCount() + 1);
 	}
+}
+
+void AWavesNPCSpawner::SetTeamOverlayMaterial(ASCAICharacter* SCUnit, ETeamType CurrTeamType)
+{
+	SCUnit->GetMesh()->SetOverlayMaterial(CurrTeamType == ETeamType::BLUE_TEAM_TYPE ? BlueTeamOverlayColor : RedTeamOverlayColor);
 }

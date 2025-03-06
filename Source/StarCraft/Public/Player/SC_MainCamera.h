@@ -50,9 +50,11 @@ protected:
 	FHitResult CursorHitResult;
 	TArray<ASCAICharacter*> SelectedUnits;
 	TArray<ASCAICharacter*> AimedUnits;
+	TMap<int32, TArray<ASCAICharacter*>> ControlGroups;
 	EMainCameraStates CurrentState = EMainCameraStates::DEFAULT;
 
 	bool bIsInSelectSeveralUnitsMode = false;
+	bool bIsSelectAllOneTypeUnits = false;
 	bool bIsInSelectBoxMode = false;
 	bool bTest = false;
 	
@@ -108,6 +110,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Action")
 	UInputAction* IABombActivate;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Action")
+	UInputAction* IASelectAllOneTypeUnits;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input Action")
+	UInputAction* IAControlGroup;
 
 // Units Skills Vars
 protected:
@@ -179,6 +187,8 @@ private:
 	void OnUseMinionRepair(const FInputActionValue& Value);
 	void OnUseHealthKit(const FInputActionValue& Value);
 	void OnUseStimpack(const FInputActionValue& Value);
+	void OnSelectAllOneTypeUnits(const FInputActionValue& Value);
+	void OnControlGroup(const FInputActionValue& Value);
 
 	void OnCreateGoal(const FInputActionValue& Value);
 	UFUNCTION(Server, Reliable)

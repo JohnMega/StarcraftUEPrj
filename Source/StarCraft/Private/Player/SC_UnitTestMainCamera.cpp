@@ -25,6 +25,7 @@
 #include "UI/UnitSelectMenuWB.h"
 #include "UI/OneToOne/PlayersAccept/OTOPlayersAcceptWB.h"
 #include "UI/OneToOne/Score/OTOScoreWB.h"
+#include "OneToOne/WavesNPCSpawner.h"
 
 ASC_UnitTestMainCamera::ASC_UnitTestMainCamera(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UUnitTestCameraWidgetComponent>("MainCameraWidgetComponent"))

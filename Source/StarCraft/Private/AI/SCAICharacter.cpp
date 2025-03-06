@@ -25,6 +25,7 @@
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "OneToOne/WavesNPCSpawner.h"
 
 ASCAICharacter::ASCAICharacter()
 {
@@ -74,6 +75,12 @@ void ASCAICharacter::BeginPlay()
 	SelectedCircleDiametrVector = GetMesh()->GetSocketLocation(LeftSelectedCircleSocketName) - GetMesh()->GetSocketLocation(RightSelectedCircleSocketName);
 	NiagaraComponent->SetNiagaraVariableFloat(SelectedCircleRadiusVarName.ToString(), (SelectedCircleDiametrVector.Length() / 2.0f));
 	
+	if (GetWorld()->GetNetMode() == NM_Client)
+	{
+		auto WavesNPCSpawner = Cast<AWavesNPCSpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AWavesNPCSpawner::StaticClass()));
+		WavesNPCSpawner->SetTeamOverlayMaterial(this, !bIsFriendly ? ETeamType::BLUE_TEAM_TYPE : ETeamType::RED_TEAM_TYPE);
+	}
+
 	IsInitiallySelectedHandle();
 	FriendlyTypeFixasion();
 }

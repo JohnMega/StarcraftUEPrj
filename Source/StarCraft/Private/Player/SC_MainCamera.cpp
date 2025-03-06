@@ -3,6 +3,7 @@
 
 #include "Player/SC_MainCamera.h"
 #include "Kismet/GameplayStatics.h"
+#include "FunctionLibraries/SCFunctionLibrary.h"
 #include "SCGameModeBase.h"
 #include "Math/MathFwd.h"
 #include "Camera/CameraComponent.h"
@@ -31,6 +32,7 @@
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
+#include "UI/ControlGroup/ControlGroupsViewWB.h"
 
 ASC_MainCamera::ASC_MainCamera(const FObjectInitializer& ObjectInitializer)
 {
@@ -168,12 +170,16 @@ void ASC_MainCamera::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	Input->BindAction(IASelectSeveralUnits, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnSelectSeveralUnitsPressed);
 	Input->BindAction(IASelectSeveralUnits, ETriggerEvent::Completed, this, &ASC_MainCamera::OnSelectSeveralUnitsReleased);
 
+	Input->BindAction(IASelectAllOneTypeUnits, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnSelectAllOneTypeUnits);
+	Input->BindAction(IASelectAllOneTypeUnits, ETriggerEvent::Completed, this, &ASC_MainCamera::OnSelectAllOneTypeUnits);
+
 	Input->BindAction(IACreateGoal, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnCreateGoal);
 	Input->BindAction(IAAttackState, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnAttackState);
 	Input->BindAction(IACameraZoom, ETriggerEvent::Triggered, this, &ASC_MainCamera::CameraZoom);
 	Input->BindAction(IACameraDecrease, ETriggerEvent::Triggered, this, &ASC_MainCamera::CameraDecrease);
 	Input->BindAction(IAGameMenuEnable, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnGameMenuEnable);
 	Input->BindAction(IABombActivate, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnBombActivateAction);
+	Input->BindAction(IAControlGroup, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnControlGroup);
 
 	Input->BindAction(IAUseStimpack, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnUseStimpack);
 	Input->BindAction(IAUseHealthKit, ETriggerEvent::Triggered, this, &ASC_MainCamera::OnUseHealthKit);
@@ -336,6 +342,26 @@ void ASC_MainCamera::OnSelectSeveralUnitsReleased(const FInputActionValue& Value
 
 void ASC_MainCamera::OnSelectOneUnitReleased(const FInputActionValue& Value)
 {
+	auto AllOneTypeUnitsSelect = [&]()
+		{
+			TArray<AActor*> AllUnits;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), SelectedUnits[0]->GetClass(), AllUnits);
+			if(!bIsInSelectSeveralUnitsMode) SelectedUnits.Empty();
+			for (int32 i = 0; i < AllUnits.Num(); ++i)
+			{
+				auto SCUnit = Cast<ASCAICharacter>(AllUnits[i]);
+				if (!SCUnit->IsDead() && SCUnit->IsFriendly())
+				{
+					int32 FindIndex;
+					if(!SelectedUnits.Find(SCUnit, FindIndex))
+					{
+						SelectedUnits.Add(SCUnit);
+						OnFriendlyCharacterClicked.Broadcast(SCUnit);
+					}
+				}
+			}
+		};
+
 	int32 LastSelectedUnitsNum = SelectedUnits.Num();
 	if (!bIsInSelectSeveralUnitsMode)
 	{
@@ -360,6 +386,10 @@ void ASC_MainCamera::OnSelectOneUnitReleased(const FInputActionValue& Value)
 	if (SelectedUnits.Num())
 	{
 		OnSelectUnitsTalk.Broadcast();
+		if (bIsSelectAllOneTypeUnits)
+		{
+			AllOneTypeUnitsSelect();
+		}
 	}
 
 	if (!LastSelectedUnitsNum && SelectedUnits.Num())
@@ -488,10 +518,61 @@ void ASC_MainCamera::OnSelectOneUnitPressed(const FInputActionValue& Value)
 	bIsInSelectBoxMode = true;
 }
 
+void ASC_MainCamera::OnSelectAllOneTypeUnits(const FInputActionValue& Value)
+{
+	bIsSelectAllOneTypeUnits = Value.Get<bool>();
+}
+
 void ASC_MainCamera::OnAttackState(const FInputActionValue& Value)
 {
 	CurrentState = EMainCameraStates::ATTACK;
 	OnStateChange.Broadcast(CurrentState);
+}
+
+void ASC_MainCamera::OnControlGroup(const FInputActionValue& Value)
+{
+	auto ControlGroupEmptyCharacterClear = [&](TArray<ASCAICharacter*>* ControlGroupUnits)
+		{
+			int32 Index = 0;
+			while (Index < ControlGroupUnits->Num())
+			{
+				if (!(*ControlGroupUnits)[Index] || ((*ControlGroupUnits)[Index] && (*ControlGroupUnits)[Index]->IsDead()))
+				{
+					ControlGroupUnits->RemoveAt(Index);
+					--Index;
+				}
+				++Index;
+			}
+		};
+
+	float ButtonNum = Value.Get<FVector>().X;
+	if (bIsInSelectSeveralUnitsMode) // Create Control Group
+	{
+		if (SelectedUnits.IsEmpty()) return;
+
+		if (ControlGroups.Contains(ButtonNum)) ControlGroups.Remove(ButtonNum);
+		ControlGroups.Add(ButtonNum, SelectedUnits);
+
+		auto ControlGroupsViewWB = USCFunctionLibrary::GetWidgetByClass<UControlGroupsViewWB>(GetWorld());
+		ControlGroupsViewWB->AddNewControlGroup(SelectedUnits, ButtonNum, SelectedUnits.Num());
+	}
+	else // Select Control Group
+	{
+		if (ControlGroups.Contains(ButtonNum))
+		{
+			OnFriendlyCharacterClicked.Broadcast(nullptr);
+			SelectedUnits.Empty();
+
+			ControlGroupEmptyCharacterClear(ControlGroups.Find(ButtonNum));
+			TArray<ASCAICharacter*> ControlGroupUnits = *ControlGroups.Find(ButtonNum);
+
+			SelectedUnits = ControlGroupUnits;
+			for (int32 i = 0; i < SelectedUnits.Num(); ++i)
+			{
+				OnFriendlyCharacterClicked.Broadcast(SelectedUnits[i]);
+			}
+		}
+	}
 }
 
 // ASCGoalActorNetHelper
