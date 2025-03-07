@@ -78,7 +78,7 @@ void ASCAICharacter::BeginPlay()
 	if (GetWorld()->GetNetMode() == NM_Client)
 	{
 		auto WavesNPCSpawner = Cast<AWavesNPCSpawner>(UGameplayStatics::GetActorOfClass(GetWorld(), AWavesNPCSpawner::StaticClass()));
-		WavesNPCSpawner->SetTeamOverlayMaterial(this, !bIsFriendly ? ETeamType::BLUE_TEAM_TYPE : ETeamType::RED_TEAM_TYPE);
+		WavesNPCSpawner->SetTeamOverlayMaterial(this, bIsFriendly ? ETeamType::BLUE_TEAM_TYPE : ETeamType::RED_TEAM_TYPE);
 	}
 
 	IsInitiallySelectedHandle();
